@@ -116,11 +116,19 @@ def predict_titles_by_country_and_director(df, country=None, director=None, top_
     return result.reset_index(drop=True)
 
 
+def configure_plot_style():
+    if sns is not None:
+        sns.set_theme(style="whitegrid")
+
+
 def plot_genre_popularity(df):
     genre_counts = top_genres(df, 10)
     data = pd.DataFrame({"genre": genre_counts.index, "count": genre_counts.values})
     plt.figure(figsize=(10, 6))
-    sns.barplot(data=data, x="count", y="genre", palette="viridis", dodge=False)
+    if sns is not None:
+        sns.barplot(data=data, x="count", y="genre", palette="viridis", dodge=False)
+    else:
+        plt.barh(data["genre"], data["count"], color="steelblue")
     plt.title("Most Popular Genres on Netflix")
     plt.xlabel("Number of Titles")
     plt.ylabel("Genre")
@@ -133,7 +141,10 @@ def plot_country_distribution(df):
     country_counts = country_distribution(df, 10)
     data = pd.DataFrame({"country": country_counts.index, "count": country_counts.values})
     plt.figure(figsize=(12, 7))
-    sns.barplot(data=data, x="count", y="country", palette="magma", dodge=False)
+    if sns is not None:
+        sns.barplot(data=data, x="count", y="country", palette="magma", dodge=False)
+    else:
+        plt.barh(data["country"], data["count"], color="darkorange")
     plt.title("Country-wise Netflix Content Distribution")
     plt.xlabel("Number of Titles")
     plt.ylabel("Country")
@@ -146,7 +157,10 @@ def plot_rating_age_groups(df):
     rating_counts = rating_age_group_distribution(df)
     data = pd.DataFrame({"age_group": rating_counts.index, "count": rating_counts.values})
     plt.figure(figsize=(8, 6))
-    sns.barplot(data=data, x="count", y="age_group", palette="Set2", dodge=False)
+    if sns is not None:
+        sns.barplot(data=data, x="count", y="age_group", palette="Set2", dodge=False)
+    else:
+        plt.barh(data["age_group"], data["count"], color="seagreen")
     plt.title("Netflix Content Ratings by Age Group")
     plt.xlabel("Number of Titles")
     plt.ylabel("Age Group")
@@ -157,7 +171,10 @@ def plot_rating_age_groups(df):
 
 def plot_year_distribution(df):
     plt.figure(figsize=(10, 6))
-    sns.histplot(data=df, x="release_year", kde=True, bins=30, color="steelblue")
+    if sns is not None:
+        sns.histplot(data=df, x="release_year", kde=True, bins=30, color="steelblue")
+    else:
+        plt.hist(df["release_year"].dropna(), bins=30, color="steelblue", edgecolor="black")
     plt.title("Distribution of Release Years")
     plt.xlabel("Release Year")
     plt.ylabel("Frequency")
@@ -170,7 +187,10 @@ def plot_type_distribution(df):
     type_counts = df["type"].value_counts()
     data = pd.DataFrame({"type": df["type"]})
     plt.figure(figsize=(8, 5))
-    sns.countplot(data=data, x="type", palette="viridis")
+    if sns is not None:
+        sns.countplot(data=data, x="type", palette="viridis")
+    else:
+        plt.bar(type_counts.index, type_counts.values, color=["#1f77b4", "#ff7f0e"])
     plt.title("Count of Movies vs TV Shows")
     plt.xlabel("Type")
     plt.ylabel("Count")
@@ -182,7 +202,11 @@ def plot_type_distribution(df):
 def plot_runtime_boxplot(df):
     valid_runtime = df[df["movie_minutes"].notna()]
     plt.figure(figsize=(8, 5))
-    sns.boxplot(data=valid_runtime, x="type", y="movie_minutes", palette="pastel")
+    if sns is not None:
+        sns.boxplot(data=valid_runtime, x="type", y="movie_minutes", palette="pastel")
+    else:
+        by_type = [valid_runtime.loc[valid_runtime["type"] == t, "movie_minutes"].dropna() for t in sorted(valid_runtime["type"].dropna().unique())]
+        plt.boxplot(by_type, labels=sorted(valid_runtime["type"].dropna().unique()))
     plt.title("Runtime Comparison by Type")
     plt.xlabel("Type")
     plt.ylabel("Duration (Minutes)")
@@ -228,7 +252,7 @@ def main():
         return
 
     df = clean_data(df)
-    sns.set_theme(style="whitegrid")
+    configure_plot_style()
 
     while True:
         print_menu()
